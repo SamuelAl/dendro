@@ -77,9 +77,12 @@ namespace DendroGH {
 
         [DllImport ("DendroAPI.dll", CallingConvention = CallingConvention.Cdecl)]
         static private extern IntPtr DendroFaceBuffer (IntPtr grid, out int size);
-#endregion PInvokes
 
-#region Members
+        [DllImport("DendroAPI.dll", CallingConvention = CallingConvention.Cdecl)]
+        static private extern IntPtr DendroClosestPoint(IntPtr grid, float[] vertices, int vCount, out int rSize);
+        #endregion PInvokes
+
+        #region Members
         private IntPtr mGrid; // stores pointer to grid in c++
         private Mesh mDisplay; // mesh representation of volume used for visualization
         private bool mValid; // volume validity
@@ -264,7 +267,7 @@ namespace DendroGH {
         }
 #endregion Properties
 
-        #region Methods
+#region Methods
         /// <summary>
         /// read a vdb file and build volume
         /// </summary>
@@ -767,6 +770,50 @@ namespace DendroGH {
             blend.UpdateDisplay ();
 
             return blend;
+        }
+
+        public List<Point3d> ClosestPoint(List<Point3d> vPoints)
+        {
+            // create point array from point3d list so we can pass to c++
+            float[] points = new float[vPoints.Count * 3];
+
+            int i = 0;
+            foreach (Point3d pt in vPoints)
+            {
+                points[i] = (float) pt.X;
+                points[i + 1] = (float) pt.Y;
+                points[i + 2] = (float) pt.Z;
+
+                i += 3;
+            }
+
+            float[] cpArray = null; // array which holds reconstructed c++ array
+            IntPtr cppPointer = IntPtr.Zero; // pointer to array on c++
+
+            // pinvoke closest point function
+            cppPointer = DendroClosestPoint(this.Grid, points, points.Length, out int size);
+
+
+            if (cppPointer != IntPtr.Zero)
+            {
+                cpArray = new float[size];
+                Marshal.Copy(cppPointer, cpArray, 0, size);
+            }
+
+            Marshal.FreeHGlobal(cppPointer);
+
+            // convert array to Point3d list
+            List<Point3d> cPoints = new List<Point3d>();
+            int j = 0;
+            while( j < size)
+            {
+                var cp = new Point3d(cpArray[j], cpArray[j + 1], cpArray[j + 2]);
+                cPoints.Add(cp);
+
+                j += 3;
+            }
+
+            return cPoints;
         }
 #endregion Methods
 

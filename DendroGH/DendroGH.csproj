@@ -55,6 +55,7 @@
     <Compile Include="Classes\DendroMask.cs" />
     <Compile Include="Classes\DendroSettings.cs" />
     <Compile Include="Classes\DendroVolume.cs" />
+    <Compile Include="Components\ClosestPoint.cs" />
     <Compile Include="Components\MaskCreate.cs" />
     <Compile Include="Components\MaskParam.cs" />
     <Compile Include="Components\ReadFile.cs" />
